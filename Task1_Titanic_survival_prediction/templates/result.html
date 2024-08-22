@@ -1,0 +1,95 @@
+<!-- templates/result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #a2ccf9, #bfd5ed);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .result-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+            animation: slideIn 0.5s ease-in-out;
+            margin-bottom: 20px; /* Space for the button */
+        }
+        h1 {
+            color: #fff;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #333;
+            font-size: 1.8em;
+            margin-top: 20px;
+            animation: fadeIn 1s;
+        }
+        .input-data {
+            margin-top: 20px;
+            text-align: left;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .input-data p {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        .home-button {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-top: 20px; /* Space above the button */
+        }
+        .home-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Prediction Result</h1>
+    <div class="result-container">
+        <h2>{{ prediction_text }}</h2>
+        <div class="input-data">
+            <p><strong>Passenger Class:</strong> {{ input_data['pclass'] }}</p>
+            <p><strong>Sex:</strong> {{ input_data['sex'] }}</p>
+            <p><strong>Age:</strong> {{ input_data['age'] }}</p>
+            <p><strong>Number of Siblings/Spouses Aboard:</strong> {{ input_data['sibsp'] }}</p>
+            <p><strong>Number of Parents/Children Aboard:</strong> {{ input_data['parch'] }}</p>
+            <p><strong>Fare:</strong> {{ input_data['fare'] }}</p>
+            <p><strong>Embarkation Port:</strong> {{ input_data['embarked'] }}</p>
+        </div>
+    </div>
+    <a href="/" class="home-button"><i class="fas fa-home"></i> Back to Home</a>
+</body>
+</html>
