@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentimentBot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, rgba(245, 247, 250, 0.8), rgba(184, 198, 219, 0.8)), 
+            url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzrWFuY90zUYyD-6iG3oOb65H6I_lXD7hEAA&s');
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            width: 400px;
+            border-radius: 15px;
+            background-color: #FFFFFF;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            transition: transform 0.3s;
+        }
+
+        .chat-container:hover {
+            transform: scale(1.02);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            padding: 15px 20px;
+            color: white;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #E6F2FF;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-message {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 10px;
+            position: relative;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background: linear-gradient(135deg, #50E3C2, #40C9A2);
+            color: white;
+        }
+
+        .input-box {
+            display: flex;
+            padding: 10px;
+            background-color: #FFFFFF;
+            border-top: 1px solid #CCCCCC;
+            align-items: center;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #CCCCCC;
+            border-radius: 5px;
+            margin-right: 10px;
+            transition: border-color 0.3s;
+        }
+
+        #user-input:focus {
+            border-color: #4A90E2;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #357ABD, #2A619A);
+            transform: scale(1.05);
+        }
+
+        .icon {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2><i class="fas fa-robot icon"></i> SentimentBot</h2>
+        </div>
+        <div class="chat-box" id="chat-box">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="input-box">
+            <input type="text" id="user-input" placeholder="Enter tweet here..." autocomplete="off" aria-label="Enter tweet here">
+            <button onclick="sendText()"><i class="fas fa-chart-pie icon"></i> Predict</button>
+
+
+            <button onclick="clearChat()"><i class="fas fa-trash-alt icon"></i> </button>
+        </div>
+    </div>
+
+    <script>
+        function sendText() {
+            const userInput = document.getElementById('user-input').value;
+            if (userInput.trim() === '') return;
+
+            // Append user message to the chat
+            const chatBox = document.getElementById('chat-box');
+            const userMessage = document.createElement('div');
+            userMessage.className = 'chat-message user-message';
+            userMessage.textContent = userInput;
+            chatBox.appendChild(userMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Clear the input
+            document.getElementById('user-input').value = '';
+
+            // Send the input to the server for sentiment analysis
+            fetch('/predict_api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Delay the bot response by 0.5 seconds
+                setTimeout(() => {
+                    // Append bot response to the chat
+                    const botMessage = document.createElement('div');
+                    botMessage.className = 'chat-message bot-message';
+                    botMessage.textContent = data.response; // Updated to match Flask response key
+                    chatBox.appendChild(botMessage);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 500);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function clearChat() {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = '';
+        }
+
+        // Send text when pressing Enter key
+        document.getElementById('user-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent the default Enter key behavior (new line)
+                sendText();
+            }
+        });
+    </script>
+</body>
+</html>

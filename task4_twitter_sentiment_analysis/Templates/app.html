@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, rgba(245, 247, 250, 0.8), rgba(184, 198, 219, 0.8)), 
+            url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlwY4K6orc81CfX1sXW8CWwug2GCv59kG67g&s') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            padding: 30px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            color: #444;
+        }
+        .chat-container {
+            margin-bottom: 30px;
+        }
+        .input-container {
+            display: flex;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        #user-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        #user-input:focus {
+            border-color: #1586c8;
+        }
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            background-color: #1586c8;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        button:hover {
+            background-color: #1586c8;
+            transform: scale(1.05);
+        }
+        button i {
+            margin-left: 5px;
+        }
+        .prediction-container {
+            margin-bottom: 30px;
+        }
+        .tweet-text {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+            position: relative;
+            padding-left: 40px;
+        }
+        .tweet-text::before {
+            content: '\f099';
+            font-family: 'FontAwesome';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #1586c8;
+        }
+        .prediction {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #e0e0e0;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+            position: relative;
+            padding-left: 40px;
+        }
+        .prediction::before {
+            content: '\f00c';
+            font-family: 'FontAwesome';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #1586c8;
+        }
+        .trends-container {
+            margin-top: 30px;
+        }
+        #trend-chart {
+            width: 100%;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fas fa-robot icon"></i> Sentiment Analysis Dashboard</h2>
+        </div>
+
+        <div class="chat-container">
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Enter tweet here..." autocomplete="off" aria-label="Enter tweet here" >
+                <button onclick="sendText()">Predict <i class="fas fa-chart-line"></i></button>
+            </div>
+            <div class="prediction-container" id="prediction-container">
+                <!-- Tweet and Prediction will be displayed here -->
+            </div>
+        </div>
+
+        <div class="trends-container">
+            <h2>Recent Sentiment Trends</h2>
+            <canvas id="trend-chart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const trendData = {
+            labels: [],
+            datasets: [{
+                label: 'Sentiment Trend',
+                data: [],
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const ctx = document.getElementById('trend-chart').getContext('2d');
+        const trendChart = new Chart(ctx, {
+            type: 'line',
+            data: trendData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (value === 1) return 'Positive';
+                                if (value === -1) return 'Negative';
+                            },
+                            stepSize: 2  // Ensure only -1 and 1 are shown on Y-axis
+                        },
+                        min: -1,
+                        max: 1
+                    }
+                }
+            }
+        });
+
+        function sendText() {
+            const userInput = document.getElementById('user-input').value;
+            if (userInput.trim() === '') return;
+
+            // Clear previous prediction and tweet
+            document.getElementById('prediction-container').innerHTML = '';
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `text=${encodeURIComponent(userInput)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayTweetAndPrediction(userInput, data.response);
+                updateTrend(data.response);
+                document.getElementById('user-input').value = '';  // Clear the input after sending
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function displayTweetAndPrediction(tweet, prediction) {
+            const predictionContainer = document.getElementById('prediction-container');
+            
+            // Display the entered tweet
+            const tweetElement = document.createElement('div');
+            tweetElement.className = 'tweet-text';
+            tweetElement.textContent = `You: ${tweet}`;
+            predictionContainer.appendChild(tweetElement);
+
+            // Display the prediction
+            const predictionElement = document.createElement('div');
+            predictionElement.className = 'prediction';
+            predictionElement.textContent = prediction;
+            predictionContainer.appendChild(predictionElement);
+        }
+
+        function updateTrend(sentiment) {
+            // Avoid adding the same sentiment multiple times
+            if (trendData.labels.length === 0 || trendData.datasets[0].data[trendData.datasets[0].data.length - 1] !== (sentiment === 'Positive' ? 1 : -1)) {
+                trendData.labels.push(new Date().toLocaleTimeString());
+                trendData.datasets[0].data.push(sentiment === 'Positive' ? 1 : -1);
+                trendChart.update();
+            }
+        }
+
+        // Send text on Enter key press
+        document.getElementById('user-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendText();
+            }
+        });
+    </script>
+</body>
+</html>
