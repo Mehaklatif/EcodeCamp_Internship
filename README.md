@@ -1,1 +1,0 @@
-# Ecodecamp_Internship
